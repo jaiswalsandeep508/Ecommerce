@@ -3,17 +3,20 @@ package com.ecommerce.service.impl;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.request.UpdateUserRequest;
 import com.ecommerce.dto.response.UserResponse;
+import com.ecommerce.exception.AccessDeniedException;
 import com.ecommerce.exception.ResourceAlreadyExistsException;
 import com.ecommerce.model.Role;
 import com.ecommerce.model.User;
 import com.ecommerce.model.enums.RoleType;
 import com.ecommerce.repository.RoleRepository;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.security.UserContext;
 import com.ecommerce.service.UserService;
 import com.ecommerce.service.factory.UserFactory;
 import com.ecommerce.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +33,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
     private final UserFactory userFactory;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -54,6 +59,7 @@ public class UserServiceImpl implements UserService {
                         new RuntimeException("Default CUSTOMER role not found")
                 );
         User user = userFactory.createUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Set.of(customerRole));
         User savedUser = userRepository.save(user);
         log.info(
@@ -66,6 +72,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserById(Long userId) {
         User user = userFactory.getUserById(userId);
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not the authorized user to get this user with userId : "+userId
+            );
+        }
         log.info(
                 "Get user successfully with userId : {}",
                 userId
@@ -76,6 +87,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserByEmail(String email) {
         User user = userFactory.getUserByEmail(email);
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not the authorized user to get this user with email : "+email
+            );
+        }
         log.info(
                 "Get user successfully with email : {}",
                 email
@@ -89,6 +105,11 @@ public class UserServiceImpl implements UserService {
             Long userId,
             UpdateUserRequest request) {
         User user = userFactory.getUserById(userId);
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this user with userId: "+userId
+            );
+        }
         userMapper.updateEntity(request, user);
         User savedUser = userRepository.save(user);
         log.info(
@@ -102,6 +123,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = userFactory.getUserById(userId);
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this user with userId: "+userId
+            );
+        }
         userRepository.delete(user);
         log.info(
                 "Deleted user successfully with userId : {}",

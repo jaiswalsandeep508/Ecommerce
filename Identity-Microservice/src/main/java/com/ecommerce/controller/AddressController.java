@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class AddressController {
 
     private final AddressService addressService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @PostMapping("/users/{userId}")
     public ResponseEntity<AddressResponse> addAddress(
             @PathVariable Long userId,
@@ -29,6 +31,7 @@ public class AddressController {
                 .body(addressService.addAddress(userId, request));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @PutMapping("/{addressId}")
     public ResponseEntity<AddressResponse> updateAddress(
             @PathVariable Long addressId,
@@ -37,6 +40,7 @@ public class AddressController {
         return ResponseEntity.ok(addressService.updateAddress(addressId, request));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> deleteAddress(
             @PathVariable Long addressId) {
@@ -45,6 +49,7 @@ public class AddressController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @GetMapping("/{addressId}")
     public ResponseEntity<AddressResponse> getAddressById(
             @PathVariable Long addressId) {
@@ -52,6 +57,7 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getAddressById(addressId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users/{userId}")
     public ResponseEntity<List<AddressResponse>> getUserAddresses(
             @PathVariable Long userId) {

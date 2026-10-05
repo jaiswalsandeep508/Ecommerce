@@ -2,10 +2,12 @@ package com.ecommerce.service.impl;
 
 import com.ecommerce.dto.request.AddressRequest;
 import com.ecommerce.dto.response.AddressResponse;
+import com.ecommerce.exception.AccessDeniedException;
 import com.ecommerce.mapper.AddressMapper;
 import com.ecommerce.model.Address;
 import com.ecommerce.model.User;
 import com.ecommerce.repository.AddressRepository;
+import com.ecommerce.security.UserContext;
 import com.ecommerce.service.AddressService;
 import com.ecommerce.service.factory.AddressFactory;
 import com.ecommerce.service.factory.UserFactory;
@@ -33,6 +35,11 @@ public class AddressServiceImpl implements AddressService {
             Long userId,
             AddressRequest request) {
         User user = userFactory.getUserById(userId);
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to add an address for this user with userId: "+userId
+            );
+        }
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             unsetDefaultAddress(userId);
         }
@@ -52,6 +59,13 @@ public class AddressServiceImpl implements AddressService {
             Long addressId,
             AddressRequest request) {
         Address address = addressFactory.getAddressById(addressId);
+        String currentUserEmail = UserContext.getCurrentUserEmail();
+        String addressIdOwnerEmail = address.getUser().getEmail();
+        if(!addressIdOwnerEmail.equals(currentUserEmail)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this address with addressId: "+addressId
+            );
+        }
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             unsetDefaultAddress(address.getUser().getUserId(), addressId);
         }
@@ -68,6 +82,13 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     public void deleteAddress(Long addressId) {
         Address address = addressFactory.getAddressById(addressId);
+        String currentUserEmail = UserContext.getCurrentUserEmail();
+        String addressIdOwnerEmail = address.getUser().getEmail();
+        if(!addressIdOwnerEmail.equals(currentUserEmail)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this address with addressId: "+addressId
+            );
+        }
         addressRepository.delete(address);
         log.info(
                 "Deleted address successfully with addressId : {}",
@@ -78,6 +99,13 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse getAddressById(Long addressId) {
         Address address = addressFactory.getAddressById(addressId);
+        String currentUserEmail = UserContext.getCurrentUserEmail();
+        String addressIdOwnerEmail = address.getUser().getEmail();
+        if(!addressIdOwnerEmail.equals(currentUserEmail)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this address with addressId: "+addressId
+            );
+        }
         log.info(
                 "Get address successfully with addressId : {}",
                 addressId
