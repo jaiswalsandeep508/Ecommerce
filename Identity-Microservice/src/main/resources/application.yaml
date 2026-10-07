@@ -4,10 +4,8 @@ server:
 spring:
   application:
     name: identity-service
-
   profiles:
     active: local
-
 
 management:
   endpoints:
@@ -17,13 +15,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-
-  instance:
-    prefer-ip-address: true
