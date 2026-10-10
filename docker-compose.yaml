@@ -1,25 +1,23 @@
 services:
   eureka-server:
-    image: eureka-microservice:v1
+    image: eureka-server:v1
     container_name: eureka-server
     ports:
-      - "8761:8761"
+      - "${EUREKA_PORT}:8761"
     environment:
-      SERVER_PORT: 8761
-      SPRING_APPLICATION_NAME: Eureka-Server
+      SPRING_APPLICATION_NAME: eureka-server
+      SERVER_PORT: ${EUREKA_PORT}
       EUREKA_REGISTER_WITH_EUREKA: false
       EUREKA_FETCH_REGISTRY: false
       EUREKA_SELF_PRESERVATION: true
       EUREKA_LOG_LEVEL: INFO
       DISCOVERY_LOG_LEVEL: INFO
-
     healthcheck:
-      test: ["CMD","wget","--spider","-q","http://localhost:8761/actuator/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
-
     networks:
       - ecommerce-network
 
@@ -28,16 +26,16 @@ services:
     container_name: identity-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${IDENTITY_DATABASE}
+      MYSQL_USER: ${IDENTITY_USER}
+      MYSQL_PASSWORD: ${IDENTITY_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${IDENTITY_ROOT_PASSWORD}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${IDENTITY_PORT}:3306"
     volumes:
       - identity-mysql-data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p{MYSQL_ROOT_PASSWORD}" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${IDENTITY_ROOT_PASSWORD}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -49,10 +47,13 @@ services:
     image: identity-microservice:v1
     container_name: identity-service
     ports:
-      - "8081:8081"
+      - "${IDENTITY_SERVICE_PORT}:8081"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       JWT_SECRET: ${JWT_SECRET}
+      IDENTITY_DATABASE: ${IDENTITY_DATABASE}
+      IDENTITY_USER: ${IDENTITY_USER}
+      IDENTITY_PASSWORD: ${IDENTITY_PASSWORD}
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -61,8 +62,52 @@ services:
     networks:
       - ecommerce-network
 
+  catalog-mysql:
+    image: mysql:8.4
+    container_name: catalog-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${CATALOG_DATABASE}
+      MYSQL_USER: ${CATALOG_USER}
+      MYSQL_PASSWORD: ${CATALOG_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${CATALOG_ROOT_PASSWORD}
+    ports:
+      - "${CATALOG_PORT}:3306"
+    volumes:
+      - catalog-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${CATALOG_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+  catalog-service:
+    image: catalog-microservice:v1
+    container_name: catalog-service
+    ports:
+      - "${CATALOG_SERVICE_PORT}:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      JWT_SECRET: ${JWT_SECRET}
+      CATALOG_DATABASE: ${CATALOG_DATABASE}
+      CATALOG_USER: ${CATALOG_USER}
+      CATALOG_PASSWORD: ${CATALOG_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      catalog-mysql:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
+
+
 volumes:
   identity-mysql-data:
+  catalog-mysql-data:
 
 networks:
   ecommerce-network:
