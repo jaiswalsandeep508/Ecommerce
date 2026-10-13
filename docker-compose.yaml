@@ -103,11 +103,50 @@ services:
     networks:
       - ecommerce-network
 
+  inventory-postgres:
+    image: postgres:17
+    container_name: inventory-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${INVENTORY_DATABASE}
+      POSTGRES_USER: ${INVENTORY_USER}
+      POSTGRES_PASSWORD: ${INVENTORY_PASSWORD}
+    ports:
+      - "${INVENTORY_PORT}:5432"
+    volumes:
+      - inventory-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${INVENTORY_USER} -d ${INVENTORY_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
 
+  inventory-service:
+    image: inventory-microservice:v1
+    container_name: inventory-service
+    ports:
+      - "${INVENTORY_SERVICE_PORT}:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      JWT_SECRET: ${JWT_SECRET}
+      INVENTORY_DATABASE: ${INVENTORY_DATABASE}
+      INVENTORY_USER: ${INVENTORY_USER}
+      INVENTORY_PASSWORD: ${INVENTORY_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      inventory-postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
 
 volumes:
   identity-mysql-data:
   catalog-mysql-data:
+  inventory-postgres-data:
 
 networks:
   ecommerce-network:
