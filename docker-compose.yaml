@@ -143,6 +143,36 @@ services:
     networks:
       - ecommerce-network
 
+  cart-redis:
+    image: redis:7
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - "${CART_REDIS_PORT}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-network
+
+  cart-service:
+    image: cart-microservice:v1
+    container_name: cart-service
+    ports:
+      - "${CART_PORT}:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      cart-redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
 volumes:
   identity-mysql-data:
   catalog-mysql-data:

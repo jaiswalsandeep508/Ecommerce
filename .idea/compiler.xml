@@ -8,16 +8,16 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Eureka-Server" />
       </profile>
-      <profile name="Annotation profile for Inventory-Microservice" enabled="true">
+      <profile name="Annotation profile for Cart-Microservice" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
-        <module name="Inventory-Microservice" />
+        <module name="Cart-Microservice" />
       </profile>
-      <profile name="Annotation profile for Identity-Microservice" enabled="true">
+      <profile name="Annotation profile for Inventory-Microservice" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -27,11 +27,13 @@
         </processorPath>
         <module name="Catalog-Microservice" />
         <module name="Identity-Microservice" />
+        <module name="Inventory-Microservice" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Cart-Microservice" options="-parameters" />
       <module name="Catalog-Microservice" options="-parameters" />
       <module name="Eureka-Server" options="-parameters" />
       <module name="Identity-Microservice" options="-parameters" />
